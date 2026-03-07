@@ -1,0 +1,97 @@
+[gd_scene load_steps=2 format=3 uid="uid://launcher001"]
+
+[ext_resource type="Script" path="res://launcher.gd" id="1_script"]
+
+[node name="Launcher" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.08, 0.12, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = 30.0
+offset_right = -30.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 15
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "FERAL WORLD"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0.4, 0.9, 0.3, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+
+[node name="Separator" type="HSeparator" parent="VBox"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(0.3, 0.6, 0.2, 0.5)
+
+[node name="VersionLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Checking version..."
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="Spacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Initializing..."
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="ProgressBar" type="ProgressBar" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 25)
+value = 0.0
+show_percentage = true
+
+[node name="Spacer2" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonBox" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="UpdateButton" type="Button" parent="VBox/ButtonBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(150, 45)
+text = "Update"
+theme_override_font_sizes/font_size = 18
+
+[node name="PlayButton" type="Button" parent="VBox/ButtonBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(150, 45)
+text = "Play"
+theme_override_font_sizes/font_size = 18
+
+[connection signal="pressed" from="VBox/ButtonBox/UpdateButton" to="." method="_on_update_pressed"]
+[connection signal="pressed" from="VBox/ButtonBox/PlayButton" to="." method="_on_play_pressed"]
