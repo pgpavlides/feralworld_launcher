@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://launcher001"]
+[gd_scene load_steps=3 format=3 uid="uid://launcher001"]
 
 [ext_resource type="Script" path="res://launcher.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/menu_background.jpg" id="2_bg"]
 
 [node name="Launcher" type="Control"]
 layout_mode = 3
@@ -11,87 +12,84 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.08, 0.12, 1)
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="LeftPanel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
+anchors_preset = 9
 anchor_bottom = 1.0
-offset_left = 30.0
-offset_top = 30.0
-offset_right = -30.0
-offset_bottom = -30.0
-grow_horizontal = 2
+offset_right = 280.0
 grow_vertical = 2
-theme_override_constants/separation = 15
 
-[node name="TitleLabel" type="Label" parent="VBox"]
+[node name="LeftPanelBG" type="ColorRect" parent="LeftPanel"]
 layout_mode = 2
-text = "FERAL WORLD"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 36
-theme_override_colors/font_color = Color(0.4, 0.9, 0.3, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
+color = Color(0.02, 0.02, 0.06, 0.85)
 
-[node name="Separator" type="HSeparator" parent="VBox"]
+[node name="VBox" type="VBoxContainer" parent="LeftPanel"]
 layout_mode = 2
-theme_override_colors/separator_color = Color(0.3, 0.6, 0.2, 0.5)
+theme_override_constants/separation = 12
 
-[node name="VersionLabel" type="Label" parent="VBox"]
+[node name="TopMargin" type="Control" parent="LeftPanel/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+
+[node name="VersionLabel" type="Label" parent="LeftPanel/VBox"]
 layout_mode = 2
 text = "Checking version..."
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 
-[node name="Spacer" type="Control" parent="VBox"]
+[node name="Spacer" type="Control" parent="LeftPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="StatusLabel" type="Label" parent="VBox"]
+[node name="StatusLabel" type="Label" parent="LeftPanel/VBox"]
 layout_mode = 2
 text = "Initializing..."
 horizontal_alignment = 1
 autowrap_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
 
-[node name="ProgressBar" type="ProgressBar" parent="VBox"]
+[node name="ProgressBar" type="ProgressBar" parent="LeftPanel/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 25)
+custom_minimum_size = Vector2(0, 20)
 value = 0.0
 show_percentage = true
 
-[node name="Spacer2" type="Control" parent="VBox"]
+[node name="Spacer2" type="Control" parent="LeftPanel/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 10)
 
-[node name="ButtonBox" type="HBoxContainer" parent="VBox"]
+[node name="ButtonBox" type="VBoxContainer" parent="LeftPanel/VBox"]
 layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 20
+theme_override_constants/separation = 8
 
-[node name="UpdateButton" type="Button" parent="VBox/ButtonBox"]
+[node name="PlayButton" type="Button" parent="LeftPanel/VBox/ButtonBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(150, 45)
+custom_minimum_size = Vector2(0, 50)
+text = "PLAY"
+theme_override_font_sizes/font_size = 20
+
+[node name="UpdateButton" type="Button" parent="LeftPanel/VBox/ButtonBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
 text = "Update"
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 14
 
-[node name="PlayButton" type="Button" parent="VBox/ButtonBox"]
+[node name="BottomMargin" type="Control" parent="LeftPanel/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(150, 45)
-text = "Play"
-theme_override_font_sizes/font_size = 18
+custom_minimum_size = Vector2(0, 20)
 
-[connection signal="pressed" from="VBox/ButtonBox/UpdateButton" to="." method="_on_update_pressed"]
-[connection signal="pressed" from="VBox/ButtonBox/PlayButton" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="LeftPanel/VBox/ButtonBox/UpdateButton" to="." method="_on_update_pressed"]
+[connection signal="pressed" from="LeftPanel/VBox/ButtonBox/PlayButton" to="." method="_on_play_pressed"]

@@ -4,13 +4,13 @@ const GITHUB_REPO = "pgpavlides/feralworld_godot"
 const GITHUB_API = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest"
 const VERSION_FILE = "version.txt"
 const GAME_FOLDER = "game"
-const GAME_EXE = "FeralWorld.exe"
+const GAME_EXE = "MageFights.exe"
 
-@onready var status_label = $VBox/StatusLabel
-@onready var version_label = $VBox/VersionLabel
-@onready var progress_bar = $VBox/ProgressBar
-@onready var play_button = $VBox/ButtonBox/PlayButton
-@onready var update_button = $VBox/ButtonBox/UpdateButton
+@onready var status_label = $LeftPanel/VBox/StatusLabel
+@onready var version_label = $LeftPanel/VBox/VersionLabel
+@onready var progress_bar = $LeftPanel/VBox/ProgressBar
+@onready var play_button = $LeftPanel/VBox/ButtonBox/PlayButton
+@onready var update_button = $LeftPanel/VBox/ButtonBox/UpdateButton
 
 var current_version = ""
 var latest_version = ""
@@ -51,7 +51,14 @@ func _on_check_completed(result, response_code, _headers, body):
 	http_check.queue_free()
 
 	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
-		status_label.text = "Failed to check for updates (HTTP " + str(response_code) + ")"
+		var err_msg = "Failed to check for updates\n"
+		if result != HTTPRequest.RESULT_SUCCESS:
+			err_msg += "Connection error (code " + str(result) + "). Check internet/firewall."
+		else:
+			err_msg += "HTTP " + str(response_code)
+		status_label.text = err_msg
+		update_button.disabled = false
+		update_button.text = "Retry"
 		return
 
 	var json = JSON.parse_string(body.get_string_from_utf8())
@@ -95,6 +102,14 @@ func _on_check_completed(result, response_code, _headers, body):
 			update_button.disabled = false
 
 func _on_update_pressed():
+	# If it's a retry, re-check for updates
+	if update_button.text == "Retry":
+		update_button.text = "Update"
+		update_button.disabled = true
+		status_label.text = "Checking for updates..."
+		_check_latest_release()
+		return
+
 	if download_url == "":
 		status_label.text = "No download URL available"
 		return

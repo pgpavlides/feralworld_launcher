@@ -3,19 +3,24 @@
 ; since the parameters that go here are not all obvious.
 ;
 ; Format:
-;   [section] key=value
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
 [application]
 
-config/name="Feral World Launcher"
+config/name="MageFights Launcher"
 run/main_scene="res://launcher.tscn"
 config/features=PackedStringArray("4.6")
 config/icon="res://icon.svg"
 
 [display]
 
-window/size/viewport_width=500
-window/size/viewport_height=400
+window/size/viewport_width=900
+window/size/viewport_height=500
 window/size/resizable=false
+
+[network]
+
+tls/certificate_bundle_override="res://ca-certificates.crt"
