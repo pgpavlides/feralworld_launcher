@@ -4,13 +4,25 @@ const GITHUB_REPO = "pgpavlides/feralworld_godot"
 const GITHUB_API = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest"
 const VERSION_FILE = "version.txt"
 const GAME_FOLDER = "game"
-const GAME_EXE = "MageFights.exe"
+
+var GAME_EXE: String
+var ZIP_NAME: String
+
+func _detect_platform():
+	if OS.get_name() == "Linux":
+		GAME_EXE = "MageFights.x86_64"
+		ZIP_NAME = "MageFights_Linux.zip"
+	else:
+		GAME_EXE = "MageFights.exe"
+		ZIP_NAME = "MageFights.zip"
 
 @onready var status_label = $LeftPanel/VBox/StatusLabel
 @onready var version_label = $LeftPanel/VBox/VersionLabel
 @onready var progress_bar = $LeftPanel/VBox/ProgressBar
 @onready var play_button = $LeftPanel/VBox/ButtonBox/PlayButton
 @onready var update_button = $LeftPanel/VBox/ButtonBox/UpdateButton
+@onready var changelog_label = $LeftPanel/VBox/ScrollContainer/ChangelogLabel
+@onready var whats_new_title = $LeftPanel/VBox/WhatsNewTitle
 
 var current_version = ""
 var latest_version = ""
@@ -20,6 +32,7 @@ var http_check: HTTPRequest
 var http_download: HTTPRequest
 
 func _ready():
+	_detect_platform()
 	play_button.disabled = true
 	update_button.disabled = true
 	progress_bar.visible = false
@@ -69,14 +82,30 @@ func _on_check_completed(result, response_code, _headers, body):
 	latest_version = json.get("tag_name", "")
 	var release_name = json.get("name", latest_version)
 
-	# Find the Windows zip asset
+	# Display release notes
+	var release_body = json.get("body", "")
+	if release_body != "":
+		whats_new_title.text = "What's New - " + release_name
+		changelog_label.text = _markdown_to_bbcode(release_body)
+	else:
+		changelog_label.text = "No release notes available."
+
+	# Find the correct zip asset for this platform
 	var assets = json.get("assets", [])
 	for asset in assets:
 		var asset_name = asset.get("name", "")
-		if asset_name.ends_with(".zip"):
+		if asset_name == ZIP_NAME:
 			download_url = asset.get("browser_download_url", "")
 			download_size = asset.get("size", 0)
 			break
+	# Fallback: if platform-specific zip not found, try any .zip
+	if download_url == "":
+		for asset in assets:
+			var asset_name = asset.get("name", "")
+			if asset_name.ends_with(".zip"):
+				download_url = asset.get("browser_download_url", "")
+				download_size = asset.get("size", 0)
+				break
 
 	if latest_version == "":
 		status_label.text = "No releases found. Create a release on GitHub first."
@@ -195,6 +224,11 @@ func _on_download_completed(result, response_code, _headers, _body):
 	# Delete the zip file
 	DirAccess.remove_absolute(zip_path)
 
+	# On Linux, make the game executable
+	if OS.get_name() == "Linux":
+		var game_exe_path = game_dir.path_join(GAME_EXE)
+		OS.execute("chmod", ["+x", game_exe_path])
+
 	# Save the version
 	_save_local_version(latest_version)
 	current_version = latest_version
@@ -231,3 +265,29 @@ func _save_local_version(version: String):
 	if f:
 		f.store_string(version)
 		f.close()
+
+func _markdown_to_bbcode(md: String) -> String:
+	var lines = md.split("\n")
+	var result = ""
+	for line in lines:
+		var trimmed = line.strip_edges()
+		if trimmed.begins_with("### "):
+			result += "[b][color=#e6b832]" + trimmed.substr(4) + "[/color][/b]\n"
+		elif trimmed.begins_with("## "):
+			result += "[b][color=#e6b832]" + trimmed.substr(3) + "[/color][/b]\n"
+		elif trimmed.begins_with("# "):
+			result += "[b][color=#e6b832]" + trimmed.substr(2) + "[/color][/b]\n"
+		elif trimmed.begins_with("- "):
+			result += "  [color=#aaaaaa]\u2022[/color] " + trimmed.substr(2) + "\n"
+		elif trimmed.begins_with("* "):
+			result += "  [color=#aaaaaa]\u2022[/color] " + trimmed.substr(2) + "\n"
+		else:
+			result += line + "\n"
+	# Bold and italic inline
+	var regex_bold = RegEx.new()
+	regex_bold.compile("\\*\\*(.+?)\\*\\*")
+	result = regex_bold.sub(result, "[b]$1[/b]", true)
+	var regex_italic = RegEx.new()
+	regex_italic.compile("\\*(.+?)\\*")
+	result = regex_italic.sub(result, "[i]$1[/i]", true)
+	return result
