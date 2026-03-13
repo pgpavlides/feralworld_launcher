@@ -1,12 +1,14 @@
 extends Control
 
-const GITHUB_REPO = "pgpavlides/feralworld_godot"
-const GITHUB_API = "https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest"
+# Cloudflare R2 base URL — update this to your R2 public URL / custom domain
+const R2_BASE_URL = "https://magefights-game-cdn.pgpavlides.workers.dev"
+const VERSION_URL = R2_BASE_URL + "/version.json"
 const VERSION_FILE = "version.txt"
 const GAME_FOLDER = "game"
 
 var GAME_EXE: String
 var ZIP_NAME: String
+var DOWNLOAD_URL: String
 
 func _detect_platform():
 	if OS.get_name() == "Linux":
@@ -15,6 +17,7 @@ func _detect_platform():
 	else:
 		GAME_EXE = "MageFights.exe"
 		ZIP_NAME = "MageFights.zip"
+	DOWNLOAD_URL = R2_BASE_URL + "/releases/" + ZIP_NAME
 
 @onready var status_label = $LeftPanel/VBox/StatusLabel
 @onready var version_label = $LeftPanel/VBox/VersionLabel
@@ -30,6 +33,7 @@ var download_url = ""
 var download_size = 0
 var http_check: HTTPRequest
 var http_download: HTTPRequest
+var release_notes = ""
 
 func _ready():
 	_detect_platform()
@@ -57,8 +61,8 @@ func _check_latest_release():
 	http_check = HTTPRequest.new()
 	add_child(http_check)
 	http_check.request_completed.connect(_on_check_completed)
-	var headers = ["User-Agent: FeralWorldLauncher", "Accept: application/vnd.github.v3+json"]
-	http_check.request(GITHUB_API, headers)
+	var headers = ["User-Agent: MageFightsLauncher"]
+	http_check.request(VERSION_URL, headers)
 
 func _on_check_completed(result, response_code, _headers, body):
 	http_check.queue_free()
@@ -79,36 +83,26 @@ func _on_check_completed(result, response_code, _headers, body):
 		status_label.text = "Failed to parse update info"
 		return
 
-	latest_version = json.get("tag_name", "")
+	latest_version = json.get("version", "")
 	var release_name = json.get("name", latest_version)
+	release_notes = json.get("notes", "")
+	download_url = json.get("download_url", DOWNLOAD_URL)
+
+	# Platform-specific download URL
+	if json.has("downloads") and json["downloads"] is Dictionary:
+		var platform_key = "linux" if OS.get_name() == "Linux" else "windows"
+		if json["downloads"].has(platform_key):
+			download_url = json["downloads"][platform_key]
 
 	# Display release notes
-	var release_body = json.get("body", "")
-	if release_body != "":
+	if release_notes != "":
 		whats_new_title.text = "What's New - " + release_name
-		changelog_label.text = _markdown_to_bbcode(release_body)
+		changelog_label.text = _markdown_to_bbcode(release_notes)
 	else:
 		changelog_label.text = "No release notes available."
 
-	# Find the correct zip asset for this platform
-	var assets = json.get("assets", [])
-	for asset in assets:
-		var asset_name = asset.get("name", "")
-		if asset_name == ZIP_NAME:
-			download_url = asset.get("browser_download_url", "")
-			download_size = asset.get("size", 0)
-			break
-	# Fallback: if platform-specific zip not found, try any .zip
-	if download_url == "":
-		for asset in assets:
-			var asset_name = asset.get("name", "")
-			if asset_name.ends_with(".zip"):
-				download_url = asset.get("browser_download_url", "")
-				download_size = asset.get("size", 0)
-				break
-
 	if latest_version == "":
-		status_label.text = "No releases found. Create a release on GitHub first."
+		status_label.text = "No version info found."
 		return
 
 	version_label.text = "Installed: " + (current_version if current_version != "" else "none")
@@ -125,7 +119,7 @@ func _on_check_completed(result, response_code, _headers, body):
 			update_button.disabled = false
 	else:
 		if download_url == "":
-			status_label.text = "New version available but no download found in release assets."
+			status_label.text = "New version available but no download URL found."
 		else:
 			status_label.text = "Update available! " + release_name
 			update_button.disabled = false
@@ -154,7 +148,7 @@ func _on_update_pressed():
 	http_download.download_file = OS.get_executable_path().get_base_dir().path_join("update.zip")
 	add_child(http_download)
 	http_download.request_completed.connect(_on_download_completed)
-	var headers = ["User-Agent: FeralWorldLauncher"]
+	var headers = ["User-Agent: MageFightsLauncher"]
 	http_download.request(download_url, headers)
 
 func _process(_delta):
@@ -205,10 +199,8 @@ func _on_download_completed(result, response_code, _headers, _body):
 		# Remove top-level folder from zip path if present
 		var out_path = file_path
 		if out_path.contains("/"):
-			# Check if there's a common root folder in the zip
 			var parts = out_path.split("/", false)
 			if parts.size() > 1:
-				# Keep relative path from inside the zip
 				out_path = "/".join(parts)
 		var full_out = game_dir.path_join(out_path)
 		# Create subdirectories
